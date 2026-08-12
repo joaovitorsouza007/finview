@@ -1,0 +1,181 @@
+// Modelo de dados do FinView
+// - User: conta do usuário (+ campos de onboarding)
+// - Category: categoria de gasto/receita (Alimentação, Transporte, ...)
+// - Transaction: movimentação financeira (entrada ou saída), ligada a uma conta
+// - Account: conta bancária manual (corrente, poupança, cartão, ...)
+// - Goal: meta de investimento (percentual do que entra)
+// - SavingsGoal: metas personalizadas (viagem, carro, dívidas, ...)
+// - Rule: regras de categorização automática criadas pelo usuário
+// - Notification: alertas in-app (limite de categoria, saldo baixo, meta)
+// - SharedAccess: compartilhamento de finanças com outro usuário (casal/família)
+// - BankConnection: banco conectado via Open Banking (Pluggy) para importar
+//   transações automaticamente
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String?
+  createdAt      DateTime @default(now())
+
+  // Onboarding (primeiro acesso)
+  monthlyIncome  Int?     // renda mensal aproximada, em centavos
+  primaryGoal    String?  // investir | quitar_dividas | viajar | comprar_imovel | outro
+  onboardingStep Int      @default(0) // progresso salvo (0 = não iniciado, 1..3 = passo atual)
+  onboardedAt    DateTime? // preenchido quando o onboarding é concluído (ou pulado)
+
+  categories    Category[]
+  transactions  Transaction[]
+  accounts      Account[]
+  goal          Goal?
+  savingsGoals  SavingsGoal[]
+  rules         Rule[]
+  notifications Notification[]
+  bankConnections BankConnection[]
+  invitesSent   SharedAccess[] @relation("SharedByMe")
+  invitesGot    SharedAccess[] @relation("SharedWithMe")
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  color        String        @default("#6b7280")
+  icon         String        @default("") // emoji da categoria
+  isIncome     Boolean       @default(false) // categoria é receita (ex.: Salário)
+  isInvestment Boolean       @default(false) // marca categorias de investimento
+  createdAt    DateTime      @default(now())
+
+  transactions Transaction[]
+  rules         Rule[]
+  savingsGoals  SavingsGoal[]
+
+  @@unique([userId, name])
+}
+
+model Account {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  type           String        @default("checking") // checking | savings | credit | other
+  color          String        @default("#059669")
+  initialBalance Int           @default(0) // saldo inicial, em centavos
+  createdAt      DateTime      @default(now())
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description String
+  amount      Int // valor em centavos (evita erro de ponto flutuante)
+  type        String    @default("EXPENSE") // EXPENSE | INCOME
+  date        DateTime
+  source      String    @default("MANUAL") // MANUAL | CSV | MOCK | BANK
+  createdAt   DateTime  @default(now())
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  accountId String?
+  account   Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  // Open Banking (Pluggy): origem da transação e ID externo p/ evitar duplicatas
+  bankConnectionId String?
+  bankConnection   BankConnection? @relation(fields: [bankConnectionId], references: [id], onDelete: SetNull)
+  externalId       String? // ID da transação no banco/Pluggy (chave única)
+
+  @@unique([externalId, userId])
+}
+
+model Goal {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  percent   Float    @default(10)
+  updatedAt DateTime @updatedAt
+}
+
+model SavingsGoal {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  targetAmount Int // valor total necessário, em centavos
+  savedAmount  Int       @default(0) // já economizado (manual)
+  targetDate   DateTime? // data alvo opcional
+  categoryId   String? // categoria opcional: se preenchida, o progresso soma os gastos dela
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Rule {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyword    String // palavra-chave que dispara a regra (ex.: "netflix")
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, keyword])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // category_limit | low_balance | goal_reminder | system
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SharedAccess {
+  id         String    @id @default(cuid())
+  ownerId    String
+  owner      User      @relation("SharedByMe", fields: [ownerId], references: [id], onDelete: Cascade)
+  guestId    String? // preenchido quando o convidado aceita
+  guest      User?     @relation("SharedWithMe", fields: [guestId], references: [id], onDelete: SetNull)
+  email      String // e-mail convidado
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([ownerId, email])
+}
+
+// Banco conectado pelo usuário (Open Banking via Pluggy).
+// O "item" do Pluggy guarda a sessão autorizada; o accessToken fica
+// criptografado e as transações importadas são mantidas mesmo ao desconectar.
+model BankConnection {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution     String    // id da instituição no Pluggy (ex.: "nubank")
+  institutionName String    // nome amigável para exibição (ex.: "Nubank")
+  itemId          String?   // id do item autorizado no Pluggy (null enquanto conectando)
+  accessToken     String    @default("") // token da sessão (criptografado)
+  status          String    @default("CONNECTING") // CONNECTING | ACTIVE | EXPIRED | ERROR | DISCONNECTED
+  lastError       String?   // mensagem amigável do último erro
+  lastSync        DateTime? // última vez que as transações foram atualizadas
+  balance         Int?      // saldo consolidado das contas, em centavos
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  transactions Transaction[]
+}

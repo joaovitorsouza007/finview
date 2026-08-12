@@ -1,0 +1,23 @@
+{
+  "name": "finview",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FinView - sua vida financeira em um só lugar",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w finview-server\" \"npm run dev -w finview-client\"",
+    "setup": "npm run db:setup -w finview-server",
+    "seed": "npm run seed -w finview-server",
+    "build": "npm run build -w finview-client",
+    "test": "npm run test -w finview-server"
+  },
+  "overrides": {
+    "vite": "^7.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

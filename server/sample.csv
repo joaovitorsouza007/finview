@@ -1,0 +1,8 @@
+data,descricao,categoria,valor,tipo
+01/08/2026,Supermercado do bairro,Alimentação,"187,90",EXPENSE
+02/08/2026,Posto de gasolina,Transporte,"120,00",EXPENSE
+03/08/2026,Aluguel,Moradia,"1400,00",EXPENSE
+04/08/2026,Netflix,Lazer,"55,90",EXPENSE
+05/08/2026,Salário do mês,,"5200,00",INCOME
+06/08/2026,Aporte no Tesouro,Investimentos,"400,00",EXPENSE
+07/08/2026,Remédio na farmácia,,"35,50",EXPENSE
