@@ -14,6 +14,7 @@ import Settings from './pages/Settings.jsx';
 import Banks from './pages/Banks.jsx';
 import BankCallback from './pages/BankCallback.jsx';
 import BankDemoAuth from './pages/BankDemoAuth.jsx';
+import About from './pages/About.jsx';
 import Loading from './components/Loading.jsx';
 import OnboardingWizard from './components/OnboardingWizard.jsx';
 import { useState } from 'react';
@@ -68,6 +69,7 @@ export default function App() {
         </Route>
         <Route path="/bancos/callback" element={<Protected><BankCallback /></Protected>} />
         <Route path="/bancos/demo-auth" element={<BankDemoAuth />} />
+        <Route path="/sobre" element={<About />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {/* Toasts globais de feedback (salvo, excluído, erro) */}

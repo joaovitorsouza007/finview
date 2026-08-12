@@ -116,8 +116,20 @@ describe('Bancos conectados (Open Banking)', () => {
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
 
-    // O webhook sincroniza em background; aguarda um pouco e confere lastSync
-    await new Promise((r) => setTimeout(r, 400));
+    // O webhook sincroniza em background; aguarda o lastSync avançar (com
+    // tolerância para o Postgres remoto) antes de conferir a contagem.
+    const deadline = Date.now() + 20000;
+    let synced = false;
+    while (Date.now() < deadline) {
+      const row = await prisma.bankConnection.findUnique({ where: { id: conn.id } });
+      if (row.lastSync && (!conn.lastSync || row.lastSync.getTime() > new Date(conn.lastSync).getTime())) {
+        synced = true;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    expect(synced).toBe(true); // o webhook disparou a sincronização
+
     const after = await prisma.transaction.count({ where: { bankConnectionId: conn.id } });
     expect(after).toBe(before); // sem duplicar
   });

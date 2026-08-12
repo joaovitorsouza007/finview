@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ArrowLeftRight, Tags, Target, Wallet, Landmark, Tags as RulesIcon, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Tags, Target, Wallet, Landmark, Tags as RulesIcon, Settings, LogOut, Menu, X, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import NotificationsBell from './NotificationsBell.jsx';
 
@@ -117,6 +117,10 @@ export default function Layout() {
         </div>
         <NavFull />
         <div className="border-t border-slate-100 px-3 py-4">
+          <NavLink to="/sobre" className={navClass}>
+            <Info className="h-[18px] w-[18px]" />
+            Sobre o projeto
+          </NavLink>
           <NavLink to="/configuracoes" className={navClass}>
             <Settings className="h-[18px] w-[18px]" />
             Configurações
@@ -144,6 +148,9 @@ export default function Layout() {
         </div>
         <NavIcons />
         <div className="flex w-full flex-col items-center border-t border-slate-100 px-2 py-4">
+          <NavLink to="/sobre" className={iconNavClass} title="Sobre o projeto">
+            <Info className="h-5 w-5" />
+          </NavLink>
           <NavLink to="/configuracoes" className={iconNavClass} title="Configurações">
             <Settings className="h-5 w-5" />
           </NavLink>
@@ -178,6 +185,10 @@ export default function Layout() {
           </div>
           <NavFull onNavigate={() => setMobileOpen(false)} />
           <div className="border-t border-slate-100 px-3 py-4">
+            <NavLink to="/sobre" className={navClass}>
+              <Info className="h-[18px] w-[18px]" />
+              Sobre o projeto
+            </NavLink>
             <NavLink to="/configuracoes" className={navClass}>
               <Settings className="h-[18px] w-[18px]" />
               Configurações

@@ -78,6 +78,10 @@ export default function Login() {
           Ainda não tem conta?{' '}
           <Link to="/cadastro" className="font-semibold text-emerald-600 hover:underline">Criar conta</Link>
         </p>
+
+        <p className="mt-3 text-center text-sm text-slate-500">
+          <Link to="/sobre" className="font-medium text-slate-600 hover:text-emerald-600 hover:underline">Sobre o projeto</Link>
+        </p>
       </div>
     </div>
   );

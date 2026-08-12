@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma.js';
 import { getItemStatus, getItemAccounts, getItemTransactions, getCategoryName, CATEGORY_MAP } from './pluggy.js';
-import { matchCategoryId } from './categorize.js';
+import { categorize, normalize } from './categorize.js';
 
 const DAYS_MS = 86400000;
 
@@ -11,16 +11,28 @@ function mapStatus(pluggyStatus) {
   return 'ACTIVE';
 }
 
-// Escolhe a categoria: primeiro a categoria do banco (se mapeada), senão as
-// regras do usuário/sistema, senão "Outros".
-async function resolveBankCategory(userId, pluggyName, description) {
+// Escolhe a categoria em memória (sem consultar o banco por transação):
+// 1) categoria do banco mapeada, 2) regras do usuário, 3) regras do sistema,
+// 4) "Outros".
+function resolveBankCategory(pluggyName, description, categoriesByName, userRules) {
   if (pluggyName) {
     const mapped = CATEGORY_MAP[String(pluggyName).toLowerCase().trim()];
     const name = mapped || pluggyName;
-    const cat = await prisma.category.findFirst({ where: { userId, name } });
-    if (cat) return cat.id;
+    const catId = categoriesByName.get(name);
+    if (catId) return catId;
   }
-  return matchCategoryId(userId, description);
+
+  const text = normalize(description);
+  if (text) {
+    for (const rule of userRules) {
+      if (rule.keyword && text.includes(normalize(rule.keyword))) return rule.categoryId;
+    }
+    const systemId = categoriesByName.get(categorize(description));
+    if (systemId) return systemId;
+    const outrosId = categoriesByName.get('Outros');
+    if (outrosId) return outrosId;
+  }
+  return null;
 }
 
 // Importa as transações de uma conexão bancária (deduplicadas por externalId).
@@ -65,6 +77,14 @@ export async function syncConnection(connectionId) {
   const from = connection.lastSync ? new Date(connection.lastSync.getTime() - DAYS_MS) : new Date(Date.now() - 90 * DAYS_MS);
   const pluggyTx = await getItemTransactions(connection.itemId, from, to);
 
+  // Pré-carrega categorias e regras do usuário para resolver tudo em memória
+  // (evita uma consulta por transação no banco remoto).
+  const [categories, userRules] = await Promise.all([
+    prisma.category.findMany({ where: { userId: connection.userId }, select: { id: true, name: true } }),
+    prisma.rule.findMany({ where: { userId: connection.userId }, select: { keyword: true, categoryId: true } }),
+  ]);
+  const categoriesByName = new Map(categories.map((c) => [c.name, c.id]));
+
   // Busca os externalIds já importados para deduplicar
   const externalIds = pluggyTx.map((t) => t.id).filter(Boolean);
   const existingRows = await prisma.transaction.findMany({
@@ -73,8 +93,8 @@ export async function syncConnection(connectionId) {
   });
   const existing = new Set(existingRows.map((r) => r.externalId));
 
-  let created = 0;
-  let updated = 0;
+  const toCreate = [];
+  const toUpdate = [];
 
   for (const tx of pluggyTx) {
     const amount = Math.abs(Math.round((tx.amount || 0) * 100));
@@ -84,7 +104,7 @@ export async function syncConnection(connectionId) {
 
     const type = String(tx.type).toUpperCase() === 'CREDIT' ? 'INCOME' : 'EXPENSE';
     const pluggyName = await getCategoryName(tx.categoryId);
-    const categoryId = await resolveBankCategory(connection.userId, pluggyName, tx.description);
+    const categoryId = resolveBankCategory(pluggyName, tx.description, categoriesByName, userRules);
     const data = {
       description: String(tx.description).slice(0, 300) || 'Sem descrição',
       amount,
@@ -94,23 +114,33 @@ export async function syncConnection(connectionId) {
       bankConnectionId: connection.id,
     };
 
-    if (existing.has(tx.id)) {
-      await prisma.transaction.updateMany({
-        where: { userId: connection.userId, externalId: tx.id },
-        data,
-      });
-      updated++;
-    } else {
-      await prisma.transaction.create({
-        data: {
-          userId: connection.userId,
-          externalId: tx.id,
-          source: 'BANK',
-          ...data,
-        },
-      });
-      created++;
-    }
+    if (existing.has(tx.id)) toUpdate.push({ externalId: tx.id, data });
+    else toCreate.push({ externalId: tx.id, ...data });
+  }
+
+  // Grava em lote: um createMany + uma transação de updates (o Postgres remoto
+  // é lento, então evitar ~30 round-trips por sincronização faz muita diferença).
+  let created = 0;
+  let updated = 0;
+
+  if (toCreate.length > 0) {
+    const res = await prisma.transaction.createMany({
+      data: toCreate.map((t) => ({ userId: connection.userId, source: 'BANK', ...t })),
+      skipDuplicates: true,
+    });
+    created = res.count;
+  }
+
+  if (toUpdate.length > 0) {
+    const results = await prisma.$transaction(
+      toUpdate.map((t) =>
+        prisma.transaction.updateMany({
+          where: { userId: connection.userId, externalId: t.externalId },
+          data: t.data,
+        })
+      )
+    );
+    updated = results.reduce((sum, r) => sum + r.count, 0);
   }
 
   // 4) Marca a última sincronização
