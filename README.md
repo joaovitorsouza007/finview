@@ -266,5 +266,3 @@ Distribuído sob a **licença MIT**. Veja o arquivo [LICENSE](LICENSE).
 
 - GitHub: [joaovitorsouza007](https://github.com/joaovitorsouza007)
 - LinkedIn: [joão-vitor-souza-da-silva](https://www.linkedin.com/in/jo%C3%A3o-vitor-souza-da-silva-8b55122ba/)
-
-Feito com 💚 e muito café. Se o FinView te ajudou, deixe uma ⭐ — e se quiser contribuir, abra uma issue ou um PR.
