@@ -6,14 +6,33 @@ import { matchCategoryId } from '../services/categorize.js';
 const router = Router();
 router.use(requireAuth);
 
-// Sugere a categoria provável para uma descrição (usado no modal de movimentação)
+// Sugere a categoria provável para uma descrição (usado no modal de movimentação).
+// `type` (INCOME/EXPENSE) evita sugerir categoria de receita para uma despesa (e vice-versa).
 router.get('/suggest', async (req, res, next) => {
   try {
     const description = req.query.description || '';
+    const type = String(req.query.type || '').toUpperCase();
     const categoryId = await matchCategoryId(req.user.id, description);
     const category = categoryId
       ? await prisma.category.findFirst({ where: { id: categoryId, userId: req.user.id } })
       : null;
+
+    const fits =
+      !type ||
+      (type === 'INCOME' ? category?.isIncome || category?.name === 'Outros'
+        : type === 'EXPENSE' ? !category?.isIncome || category?.name === 'Outros'
+          : true);
+
+    if (category && !fits) {
+      const outros = await prisma.category.findFirst({ where: { userId: req.user.id, name: 'Outros' } });
+      res.json({
+        categoryId: outros?.id || null,
+        categoryName: outros?.name || null,
+        icon: outros?.icon || null,
+      });
+      return;
+    }
+
     res.json({ categoryId: category?.id || null, categoryName: category?.name || null, icon: category?.icon || null });
   } catch (err) {
     next(err);

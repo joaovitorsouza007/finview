@@ -128,8 +128,8 @@ export default function OnboardingWizard({ onFinish }) {
               </span>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">Primeiro passo</h1>
               <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                Adicione sua primeira movimentação para começar a ver seus gráficos, ou conecte seu banco para importar
-                tudo de uma vez.
+                Adicione sua primeira movimentação para começar a ver seus gráficos — ou importe um
+                extrato CSV em Movimentações.
               </p>
               <div className="mt-5 grid gap-2">
                 <button
@@ -137,12 +137,6 @@ export default function OnboardingWizard({ onFinish }) {
                   className="btn-primary w-full"
                 >
                   Adicionar minha primeira movimentação <ArrowRight className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => { onFinish(); navigate('/bancos'); }}
-                  className="btn-secondary w-full"
-                >
-                  Conectar conta bancária
                 </button>
               </div>
             </div>

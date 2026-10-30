@@ -23,7 +23,7 @@ você se pergunta: *"mas para onde foi tudo?"*
 Os aplicativos que existem são um dos dois extremos:
 
 - **Simples demais**: só mostram o saldo. Não respondem *para onde o dinheiro foi*.
-- **Completos demais**: cheios de jargão financeiro, exigem conexão com banco logo de cara ou
+- **Completos demais**: cheios de termos técnicos, exigem conexão com banco logo de cara ou
   cobram para fazer algo que deveria ser básico.
 
 E a planilha, que é o "meio-termo" clássico, exige disciplina que a maioria de nós não tem.
@@ -39,7 +39,7 @@ O **FinView** é um organizador de vida financeira com uma proposta simples:
 > Abra uma vez por semana e enxergue sua vida financeira em um minuto: o que entrou, o que saiu,
 > para onde o dinheiro foi e quanto está guardado para os seus objetivos.
 
-Clareza, não jargão. Sem planilhas, sem notificações infinitas, sem gamificação.
+Clareza em uma só tela. Sem planilhas, sem notificações infinitas, sem gamificação.
 
 Algumas das funcionalidades:
 

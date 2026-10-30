@@ -7,6 +7,7 @@ import useAppStore from '../stores/appStore.js';
 import Fab from '../components/Fab.jsx';
 import TransactionModal from '../components/TransactionModal.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import Modal from '../components/Modal.jsx';
 
 const PERIODS = [
   { value: 'all', label: 'Todo o período' },
@@ -46,12 +47,17 @@ export default function Transactions() {
   const fetchCategories = useAppStore((s) => s.fetchCategories);
   const fetchTransactions = useAppStore((s) => s.fetchTransactions);
   const deleteTransaction = useAppStore((s) => s.deleteTransaction);
+  const clearTransactions = useAppStore((s) => s.clearTransactions);
 
   const [filters, setFilters] = useState({ period: 'all', categoryId: '', type: '', search: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [toDelete, setToDelete] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearPassword, setClearPassword] = useState('');
+  const [clearBusy, setClearBusy] = useState(false);
+  const [clearError, setClearError] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -96,12 +102,21 @@ export default function Transactions() {
           <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Movimentações</h1>
           <p className="mt-1 text-sm text-slate-500">Registre o que entrou e o que saiu.</p>
         </div>
-        <button
-          onClick={() => { setEditing(null); setModalOpen(true); }}
-          className="btn-primary hidden lg:inline-flex"
-        >
-          <Plus className="h-4 w-4" /> Nova movimentação
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setClearOpen(true)}
+            disabled={transactions.length === 0}
+            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash2 className="h-4 w-4" /> Limpar tudo
+          </button>
+          <button
+            onClick={() => { setEditing(null); setModalOpen(true); }}
+            className="btn-primary hidden lg:inline-flex"
+          >
+            <Plus className="h-4 w-4" /> Nova movimentação
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -116,8 +131,9 @@ export default function Transactions() {
             </div>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-slate-500">
-            Colunas: <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">data, descricao, categoria, valor, tipo</code>.
-            A categoria é opcional — sem ela, o app tenta adivinhar pela descrição.
+            Suporta o extrato do Nubank (<code className="rounded bg-slate-100 px-1 py-0.5 text-xs">Data, Valor, Descrição</code>)
+            ou colunas <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">data, descricao, categoria, valor, tipo</code>.
+            A categoria é opcional — sem ela, o app tenta adivinhar pela descrição. Importar o mesmo extrato duas vezes não duplica lançamentos.
           </p>
           <input
             type="file"
@@ -156,7 +172,7 @@ export default function Transactions() {
 
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-slate-500">
-              {filtered.length} movimentação{filtered.length === 1 ? '' : 'ões'}
+              {filtered.length} {filtered.length === 1 ? 'movimentação' : 'movimentações'}
               {incomes > 0 && <> · {incomes} receita{incomes === 1 ? '' : 's'}</>}
               {expenses > 0 && <> · {expenses} despesa{expenses === 1 ? '' : 's'}</>}
             </p>
@@ -237,6 +253,50 @@ export default function Transactions() {
         message={`Excluir "${toDelete?.description}"? Essa ação não pode ser desfeita.`}
         confirmLabel="Excluir"
       />
+
+      <Modal
+        open={clearOpen}
+        onClose={() => setClearOpen(false)}
+        title="Limpar todas as movimentações"
+        subtitle="Essa ação não pode ser desfeita."
+        maxWidth="max-w-sm"
+      >
+        <p className="text-sm leading-relaxed text-slate-600">
+          Todas as {transactions.length} movimentações serão apagadas. Digite sua senha para confirmar.
+        </p>
+        <input
+          type="password"
+          value={clearPassword}
+          onChange={(e) => { setClearPassword(e.target.value); setClearError(''); }}
+          placeholder="Sua senha"
+          className="input mt-4"
+          autoFocus
+        />
+        {clearError && <p className="mt-2 text-sm text-red-600">{clearError}</p>}
+        <div className="mt-6 flex justify-end gap-2">
+          <button onClick={() => setClearOpen(false)} className="btn-secondary">Cancelar</button>
+          <button
+            onClick={async () => {
+              if (!clearPassword) { setClearError('Digite sua senha.'); return; }
+              setClearBusy(true);
+              setClearError('');
+              try {
+                await clearTransactions(clearPassword);
+                setClearOpen(false);
+                setClearPassword('');
+              } catch (err) {
+                setClearError(err.response?.data?.error || 'Não foi possível limpar.');
+              } finally {
+                setClearBusy(false);
+              }
+            }}
+            disabled={clearBusy}
+            className="btn-danger"
+          >
+            {clearBusy ? 'Limpando...' : 'Limpar tudo'}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

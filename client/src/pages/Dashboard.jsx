@@ -5,7 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   BarChart, Bar, Legend,
 } from 'recharts';
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, FileDown, Landmark, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, ArrowRight, FileDown, Users } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { formatMoney, formatDate } from '../lib/format.js';
 import useAppStore from '../stores/appStore.js';
@@ -143,15 +143,15 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Open Banking: importação automática de saldos e movimentações */}
+      {/* Contas manuais: convite para criar a primeira */}
       {!hasAccounts && (
         <Link
-          to="/bancos"
+          to="/contas"
           className="flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 transition hover:bg-emerald-100"
         >
-          <Landmark className="h-4 w-4 shrink-0" />
+          <Wallet className="h-4 w-4 shrink-0" />
           <span className="flex-1">
-            <strong>Conecte seu banco</strong> para importar saldos automaticamente — ou crie contas manualmente.
+            <strong>Crie uma conta</strong> para acompanhar o saldo de cada lugar onde você guarda dinheiro.
           </span>
           <ArrowRight className="h-4 w-4 shrink-0" />
         </Link>

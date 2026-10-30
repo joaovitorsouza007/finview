@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Wallet, Plus, Pencil, Trash2, Link2, CreditCard, PiggyBank } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Wallet, Plus, Pencil, Trash2, CreditCard, PiggyBank } from 'lucide-react';
 import useAppStore from '../stores/appStore.js';
 import AccountModal from '../components/AccountModal.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
@@ -24,7 +23,6 @@ const TYPE_ICON = {
 // Múltiplas contas: cada uma tem saldo inicial e recebe o saldo de suas
 // movimentações. O total consolida tudo no dashboard.
 export default function Accounts() {
-  const navigate = useNavigate();
   const accounts = useAppStore((s) => s.accounts);
   const fetchAccounts = useAppStore((s) => s.fetchAccounts);
   const deleteAccount = useAppStore((s) => s.deleteAccount);
@@ -52,9 +50,6 @@ export default function Accounts() {
           <button onClick={() => { setEditing(null); setModalOpen(true); }} className="btn-primary hidden lg:inline-flex">
             <Plus className="h-4 w-4" /> Nova conta
           </button>
-          <button onClick={() => navigate('/bancos')} className="btn-secondary">
-            <Link2 className="h-4 w-4" /> Conectar conta bancária
-          </button>
         </div>
       </div>
 
@@ -65,13 +60,12 @@ export default function Accounts() {
           </span>
           <h2 className="mt-4 text-lg font-bold text-slate-900">Nenhuma conta ainda</h2>
           <p className="mt-1 max-w-md text-sm text-slate-500">
-            Crie uma conta manual ou conecte seu banco para importar os saldos automaticamente.
+            Crie uma conta manual para acompanhar saldo por saldo.
           </p>
           <div className="mt-5 flex gap-2">
             <button onClick={() => { setEditing(null); setModalOpen(true); }} className="btn-primary">
               <Plus className="h-4 w-4" /> Criar conta
             </button>
-            <button onClick={() => navigate('/bancos')} className="btn-secondary">Conectar banco</button>
           </div>
         </div>
       ) : (

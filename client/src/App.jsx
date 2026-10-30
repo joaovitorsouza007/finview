@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext.jsx';
 import Layout from './components/Layout.jsx';
+import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -11,9 +12,6 @@ import Goal from './pages/Goal.jsx';
 import Accounts from './pages/Accounts.jsx';
 import Rules from './pages/Rules.jsx';
 import Settings from './pages/Settings.jsx';
-import Banks from './pages/Banks.jsx';
-import BankCallback from './pages/BankCallback.jsx';
-import BankDemoAuth from './pages/BankDemoAuth.jsx';
 import About from './pages/About.jsx';
 import Loading from './components/Loading.jsx';
 import OnboardingWizard from './components/OnboardingWizard.jsx';
@@ -47,7 +45,7 @@ function AppShell() {
 function Guest({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <Loading />;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -55,21 +53,23 @@ export default function App() {
   return (
     <>
       <Routes>
+        {/* Landing pública: página de entrada do projeto */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Guest><Login /></Guest>} />
         <Route path="/cadastro" element={<Guest><Register /></Guest>} />
-        <Route path="/" element={<Protected><AppShell /></Protected>}>
-          <Route index element={<Dashboard />} />
-          <Route path="movimentacoes" element={<Transactions />} />
-          <Route path="categorias" element={<Categories />} />
-          <Route path="metas" element={<Goal />} />
-          <Route path="contas" element={<Accounts />} />
-          <Route path="bancos" element={<Banks />} />
-          <Route path="regras" element={<Rules />} />
-          <Route path="configuracoes" element={<Settings />} />
-        </Route>
-        <Route path="/bancos/callback" element={<Protected><BankCallback /></Protected>} />
-        <Route path="/bancos/demo-auth" element={<BankDemoAuth />} />
         <Route path="/sobre" element={<About />} />
+
+        {/* Área restrita do app */}
+        <Route element={<Protected><AppShell /></Protected>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/movimentacoes" element={<Transactions />} />
+          <Route path="/categorias" element={<Categories />} />
+          <Route path="/metas" element={<Goal />} />
+          <Route path="/contas" element={<Accounts />} />
+          <Route path="/regras" element={<Rules />} />
+          <Route path="/configuracoes" element={<Settings />} />
+        </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {/* Toasts globais de feedback (salvo, excluído, erro) */}

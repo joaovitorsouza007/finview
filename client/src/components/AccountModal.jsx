@@ -71,7 +71,7 @@ export default function AccountModal({ open, onClose, account }) {
           <label className="label">Nome da conta *</label>
           <input
             {...register('name', { required: true })}
-            placeholder="Ex.: Conta do Nubank"
+            placeholder="Ex.: Conta corrente"
             className="input"
             autoFocus
           />

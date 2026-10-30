@@ -10,7 +10,7 @@
 
 Por muito tempo, eu não fazia ideia de para onde meu dinheiro ia. O salário caía, o mês passava e,
 no fim, a mesma pergunta de sempre: *"mas para onde foi tudo?"*. Comecei com planilhas — todas
-abandonadas depois de duas semanas. Os aplicativos que existiam eram cheios de jargão financeiro,
+abandonadas depois de duas semanas. Os aplicativos que existiam eram cheios de termos técnicos,
 exigiam conexão com banco ou cobravam para fazer algo que parecia simples.
 
 Foi essa **dor pessoal** que me levou a construir o FinView: uma ferramenta que eu gostaria de ter.

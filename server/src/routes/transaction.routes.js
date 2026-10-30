@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
 import { parseCsvBuffer } from '../utils/csv.js';
@@ -167,6 +168,24 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
+// Apaga todas as movimentações (exige a senha do usuário logado como confirmação)
+router.delete('/clear', async (req, res, next) => {
+  try {
+    const { password } = req.body || {};
+    if (!password) return res.status(400).json({ error: 'Informe sua senha para confirmar.' });
+
+    const ok = await bcrypt.compare(String(password), req.user.passwordHash);
+    if (!ok) return res.status(403).json({ error: 'Senha incorreta.' });
+
+    const { effectiveUserId } = await resolveScope(req.user.id);
+    const { count } = await prisma.transaction.deleteMany({ where: { userId: effectiveUserId } });
+
+    res.json({ deleted: count });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Remove uma movimentação
 router.delete('/:id', async (req, res, next) => {
   try {
@@ -196,6 +215,19 @@ router.post('/import', upload.single('file'), async (req, res, next) => {
     let skipped = 0;
 
     for (const row of rows) {
+      // Identificador do extrato de origem (ex.: Nubank) evita importar o mesmo lançamento duas vezes
+      const externalId = String(row.identificador ?? row.id ?? '').trim() || null;
+      if (externalId) {
+        const exists = await prisma.transaction.findFirst({
+          where: { userId: effectiveUserId, externalId },
+          select: { id: true },
+        });
+        if (exists) {
+          skipped++;
+          continue;
+        }
+      }
+
       const cents = toCents(row.valor ?? row.amount);
       if (cents === null || cents === 0) {
         skipped++;
@@ -207,14 +239,16 @@ router.post('/import', upload.single('file'), async (req, res, next) => {
         continue;
       }
 
-      // Tipo: coluna "tipo" tem prioridade; senão, valor negativo = entrada
+      // Tipo: coluna "tipo" tem prioridade; senão, negativo = despesa, positivo = receita
       const rawType = String(row.tipo ?? row.type ?? '').toUpperCase();
       const type =
         rawType === 'INCOME' || rawType === 'RECEITA' || rawType === 'R'
           ? 'INCOME'
-          : cents < 0
-            ? 'INCOME'
-            : 'EXPENSE';
+          : rawType === 'EXPENSE' || rawType === 'DESPESA' || rawType === 'D'
+            ? 'EXPENSE'
+            : cents < 0
+              ? 'EXPENSE'
+              : 'INCOME';
       const amount = Math.abs(cents);
 
       const description = String(row.descricao ?? row.description ?? '').trim() || 'Sem descrição';
@@ -235,6 +269,7 @@ router.post('/import', upload.single('file'), async (req, res, next) => {
           date: d,
           source: 'CSV',
           categoryId,
+          externalId,
         },
       });
       created++;

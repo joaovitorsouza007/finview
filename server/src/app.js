@@ -9,7 +9,6 @@ import rulesRoutes from './routes/rules.routes.js';
 import notificationRoutes from './routes/notifications.routes.js';
 import savingsGoalsRoutes from './routes/savings-goals.routes.js';
 import accountsRoutes from './routes/accounts.routes.js';
-import banksRoutes from './routes/banks.routes.js';
 import sharingRoutes from './routes/sharing.routes.js';
 import { notFound, errorHandler } from './middleware/error.js';
 
@@ -31,7 +30,6 @@ export function createApp() {
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/savings-goals', savingsGoalsRoutes);
   app.use('/api/accounts', accountsRoutes);
-  app.use('/api/banks', banksRoutes);
   app.use('/api/sharing', sharingRoutes);
 
   app.use(notFound);

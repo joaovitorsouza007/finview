@@ -53,7 +53,7 @@ export default function NotificationsBell() {
     if (!n.read) { try { await markNotificationRead(n.id); } catch { /* opcional */ } }
     if (n.type === 'category_limit') navigate('/categorias');
     else if (n.type === 'goal_reminder') navigate('/metas');
-    else navigate('/');
+    else navigate('/dashboard');
     setOpen(false);
   }
 

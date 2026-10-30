@@ -76,6 +76,45 @@ describe('Transações', () => {
     expect(remedio.category.name).toBe('Saúde');
   });
 
+  it('importa um CSV no padrão do extrato do Nubank', async () => {
+    const csv = [
+      'Data,Valor,Identificador,Descrição',
+      '01/08/2026,66.73,6a6e1e8b-0001,Transferência recebida pelo Pix',
+      '02/08/2026,-1.89,6a6fba4d-0002,Compra no débito via NuPay - iFood',
+      '03/08/2026,-426.00,6a775fe3-0003,Pagamento de fatura',
+    ].join('\n');
+
+    const res = await request(app)
+      .post('/api/transactions/import')
+      .set(authHeader(token))
+      .attach('file', Buffer.from(csv), 'nu_extrato.csv');
+
+    expect(res.status).toBe(200);
+    expect(res.body.created).toBe(3);
+
+    const receita = await prisma.transaction.findFirst({
+      where: { userId: user.id, externalId: '6a6e1e8b-0001' },
+    });
+    expect(receita.type).toBe('INCOME');
+    expect(receita.amount).toBe(6673);
+    expect(receita.date).toEqual(new Date(2026, 7, 1));
+
+    const despesa = await prisma.transaction.findFirst({
+      where: { userId: user.id, externalId: '6a6fba4d-0002' },
+    });
+    expect(despesa.type).toBe('EXPENSE');
+    expect(despesa.amount).toBe(189);
+
+    // Importar o mesmo arquivo de novo não duplica (usa o Identificador)
+    const res2 = await request(app)
+      .post('/api/transactions/import')
+      .set(authHeader(token))
+      .attach('file', Buffer.from(csv), 'nu_extrato.csv');
+    expect(res2.status).toBe(200);
+    expect(res2.body.created).toBe(0);
+    expect(res2.body.skipped).toBe(3);
+  });
+
   it('remove uma movimentação', async () => {
     const t = await prisma.transaction.findFirst({ where: { userId: user.id } });
     const res = await request(app).delete(`/api/transactions/${t.id}`).set(authHeader(token));
@@ -102,5 +141,35 @@ describe('Transações', () => {
     expect(res.body.amount).toBe(20090);
     expect(res.body.type).toBe('INCOME');
     expect(t).toBeTruthy();
+  });
+
+  it('limpa todas as movimentações apenas com a senha correta', async () => {
+    // Sem senha
+    const noPass = await request(app)
+      .delete('/api/transactions/clear')
+      .set(authHeader(token))
+      .send({});
+    expect(noPass.status).toBe(400);
+
+    // Senha errada
+    const wrongPass = await request(app)
+      .delete('/api/transactions/clear')
+      .set(authHeader(token))
+      .send({ password: 'senha-errada' });
+    expect(wrongPass.status).toBe(403);
+
+    const before = await prisma.transaction.count({ where: { userId: user.id } });
+    expect(before).toBeGreaterThan(0);
+
+    // Senha correta apaga tudo
+    const ok = await request(app)
+      .delete('/api/transactions/clear')
+      .set(authHeader(token))
+      .send({ password: '123456' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.deleted).toBe(before);
+
+    const after = await prisma.transaction.count({ where: { userId: user.id } });
+    expect(after).toBe(0);
   });
 });

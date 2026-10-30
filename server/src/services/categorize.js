@@ -12,6 +12,8 @@ export const DEFAULT_CATEGORIES = [
   { name: 'Educação', color: '#a855f7', icon: '📚', isIncome: false, isInvestment: false },
   { name: 'Investimentos', color: '#10b981', icon: '📈', isIncome: false, isInvestment: true },
   { name: 'Salário', color: '#22c55e', icon: '💵', isIncome: true, isInvestment: false },
+  { name: 'Renda fixa', color: '#0ea5e9', icon: '🏦', isIncome: true, isInvestment: false },
+  { name: 'Renda variável', color: '#f97316', icon: '📊', isIncome: true, isInvestment: false },
   { name: 'Outros', color: '#6b7280', icon: '📦', isIncome: false, isInvestment: false },
 ];
 

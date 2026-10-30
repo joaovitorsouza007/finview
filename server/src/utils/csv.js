@@ -9,7 +9,7 @@ function normalizeKey(k) {
 export function parseCsvBuffer(buffer) {
   return new Promise((resolve, reject) => {
     const rows = [];
-    parse(buffer, { columns: true, trim: true, skip_empty_lines: true })
+    parse(buffer, { columns: true, trim: true, skip_empty_lines: true, bom: true })
       .on('data', (row) => {
         const norm = {};
         for (const [k, v] of Object.entries(row)) {

@@ -36,6 +36,20 @@ export default function TransactionModal({ open, onClose, transaction }) {
   const description = watch('description');
   const categoryId = watch('categoryId');
 
+  const filteredCategories = categories.filter((c) =>
+    type === 'INCOME'
+      ? c.isIncome || c.name === 'Outros'
+      : !c.isIncome || c.name === 'Outros'
+  );
+
+  // Troca de tipo: limpa a categoria se ela não faz sentido no novo tipo
+  useEffect(() => {
+    if (categoryId && !filteredCategories.find((c) => c.id === categoryId)) {
+      setValue('categoryId', '', { shouldValidate: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
+
   // Preenche o formulário ao abrir (novo = vazio, edição = dados atuais)
   useEffect(() => {
     if (open) {
@@ -70,7 +84,7 @@ export default function TransactionModal({ open, onClose, transaction }) {
     if (!desc || categoryId) return;
     setSuggesting(true);
     try {
-      const res = await api.get('/rules/suggest', { params: { description: desc } });
+      const res = await api.get('/rules/suggest', { params: { description: desc, type } });
       if (res.data.categoryId && !transaction) {
         setValue('categoryId', res.data.categoryId, { shouldValidate: true });
       }
@@ -171,18 +185,12 @@ export default function TransactionModal({ open, onClose, transaction }) {
           <label className="label">Categoria</label>
           <select {...register('categoryId')} className="input">
             <option value="">Sem categoria</option>
-            {categories.map((c) => (
+            {filteredCategories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.icon ? `${c.icon} ` : ''}{c.name}
               </option>
             ))}
           </select>
-          {type === 'INCOME' && categories.filter((c) => c.isIncome).length > 0 && (
-            <p className="mt-1 text-xs text-slate-400">
-              Sugestões de receita:{' '}
-              {categories.filter((c) => c.isIncome).map((c) => c.name).join(', ')}.
-            </p>
-          )}
         </div>
 
         {!transaction && description.trim() && categoryId && (

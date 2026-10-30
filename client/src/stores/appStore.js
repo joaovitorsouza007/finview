@@ -10,7 +10,6 @@ const useAppStore = create((set, get) => ({
   transactions: [],
   recent: [],
   accounts: [],
-  banks: [],
   notifications: [],
   rules: [],
   savingsGoals: [],
@@ -50,15 +49,6 @@ const useAppStore = create((set, get) => ({
     }
   },
 
-  async fetchBanks() {
-    try {
-      const res = await api.get('/banks');
-      set({ banks: res.data });
-    } catch {
-      /* bancos são opcionais */
-    }
-  },
-
   async fetchRules() {
     try {
       const res = await api.get('/rules');
@@ -93,7 +83,6 @@ const useAppStore = create((set, get) => ({
       get().fetchCategories(),
       get().fetchTransactions(),
       get().fetchAccounts(),
-      get().fetchBanks(),
     ]);
     get().bump();
     set({ loading: false });
@@ -129,6 +118,17 @@ const useAppStore = create((set, get) => ({
       toast.success('Movimentação excluída.');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Não foi possível excluir.');
+      throw err;
+    }
+  },
+
+  async clearTransactions(password) {
+    try {
+      const res = await api.delete('/transactions/clear', { data: { password } });
+      await get().refresh();
+      toast.success(`${res.data.deleted} ${res.data.deleted === 1 ? 'movimentação removida' : 'movimentações removidas'}.`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Não foi possível limpar as movimentações.');
       throw err;
     }
   },

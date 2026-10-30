@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import Logo from '../components/brand/Logo.jsx';
 
 export default function Register() {
   const { register: registerUser } = useAuth();
@@ -15,7 +16,7 @@ export default function Register() {
     setError('');
     try {
       await registerUser({ name: data.name, email: data.email, password: data.password });
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Não foi possível criar a conta.');
     } finally {
@@ -27,9 +28,7 @@ export default function Register() {
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-2xl font-bold text-white shadow-lg shadow-emerald-600/25">
-            F
-          </span>
+          <Logo size={52} variant="mark" tone="color" className="mx-auto mb-3" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Criar conta</h1>
           <p className="mt-1 text-sm text-slate-500">Leva menos de um minuto.</p>
         </div>
@@ -45,27 +44,31 @@ export default function Register() {
           </div>
           <div>
             <label className="label">Senha</label>
-            <input
-              {...register('password')}
-              type="password"
-              required
-              minLength={6}
-              autoComplete="new-password"
-              className="input"
-            />
-            <p className="mt-1 text-xs text-slate-400">Mínimo de 6 caracteres.</p>
+            <input {...register('password')} type="password" required autoComplete="new-password" className="input" />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
-          <button type="submit" disabled={busy} className="btn-primary w-full">
+          <button type="submit" className="btn-primary w-full" disabled={busy}>
             {busy ? 'Criando...' : 'Criar conta'}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-slate-500">
           Já tem conta?{' '}
-          <Link to="/login" className="font-semibold text-emerald-600 hover:underline">Entrar</Link>
+          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-700">
+            Entrar
+          </Link>
+        </p>
+
+        <p className="mt-6 text-center text-sm text-slate-400">
+          <Link to="/sobre" className="hover:text-slate-600">
+            Sobre o projeto
+          </Link>{' '}
+          ·{' '}
+          <Link to="/" className="hover:text-slate-600">
+            Página inicial
+          </Link>
         </p>
       </div>
     </div>

@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ArrowLeftRight, Tags, Target, Wallet, Landmark, Tags as RulesIcon, Settings, LogOut, Menu, X, Info } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Tags, Target, Wallet, Tags as RulesIcon, Settings, LogOut, Menu, X, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import NotificationsBell from './NotificationsBell.jsx';
+import Logo from './brand/Logo.jsx';
 
 const NAV = [
-  { to: '/', end: true, label: 'Visão geral', icon: LayoutDashboard },
+  { to: '/dashboard', end: true, label: 'Visão geral', icon: LayoutDashboard },
   { to: '/movimentacoes', label: 'Movimentações', icon: ArrowLeftRight },
   { to: '/categorias', label: 'Categorias', icon: Tags },
   { to: '/metas', label: 'Metas', icon: Target },
   { to: '/contas', label: 'Contas', icon: Wallet },
-  { to: '/bancos', label: 'Bancos conectados', icon: Landmark },
 ];
 
 function navClass({ isActive }) {
   return `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
     isActive
-      ? 'bg-emerald-50 text-emerald-700'
+      ? 'bg-blue-50 text-blue-700'
       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
   }`;
 }
@@ -24,23 +24,20 @@ function navClass({ isActive }) {
 function iconNavClass({ isActive }) {
   return `flex items-center justify-center rounded-xl p-2.5 text-sm font-medium transition ${
     isActive
-      ? 'bg-emerald-50 text-emerald-700'
+      ? 'bg-blue-50 text-blue-700'
       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
   }`;
 }
 
 function Brand({ compact = false }) {
   return (
-    <div className={`flex items-center gap-2.5 ${compact ? 'flex-col gap-3' : ''}`}>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-lg font-bold text-white shadow-sm">
-        F
-      </span>
-      {!compact && (
-        <div>
-          <p className="text-base font-bold leading-tight text-slate-900">FinView</p>
-          <p className="text-[11px] text-slate-400">Sua vida financeira</p>
-        </div>
+    <div className={`flex gap-2.5 ${compact ? '' : 'flex-col'}`}>
+      {compact ? (
+        <Logo size={36} variant="mark" tone="color" />
+      ) : (
+        <Logo size={38} variant="horizontal" tone="color" />
       )}
+      {!compact && <p className="text-[11px] text-slate-400">Sua vida financeira</p>}
     </div>
   );
 }

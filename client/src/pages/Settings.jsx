@@ -1,26 +1,21 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Landmark, Users, Check, X, Trash2, ShieldCheck, Plus, ArrowRight } from 'lucide-react';
+import { Users, Check, X, Trash2, Plus } from 'lucide-react';
 import { api } from '../lib/api.js';
 import toast from 'react-hot-toast';
 import useAppStore from '../stores/appStore.js';
 import { formatDate } from '../lib/format.js';
 
-// Configurações: bancos conectados (Open Banking) e compartilhamento.
+// Configurações: acesso e compartilhamento.
 export default function Settings() {
-  const navigate = useNavigate();
   const sharing = useAppStore((s) => s.sharing);
   const fetchSharing = useAppStore((s) => s.fetchSharing);
-  const banks = useAppStore((s) => s.banks);
-  const fetchBanks = useAppStore((s) => s.fetchBanks);
 
   const [email, setEmail] = useState('');
   const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     fetchSharing();
-    fetchBanks();
-  }, [fetchSharing, fetchBanks]);
+  }, [fetchSharing]);
 
   async function invite(e) {
     e.preventDefault();
@@ -61,64 +56,10 @@ export default function Settings() {
     <div className="space-y-8">
       <div>
         <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Configurações</h1>
-        <p className="mt-1 text-sm text-slate-500">Banco, acesso e compartilhamento.</p>
+        <p className="mt-1 text-sm text-slate-500">Acesso e compartilhamento.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Open Banking */}
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
-              <Landmark className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="font-bold text-slate-900">Conta bancária</h2>
-              <p className="text-sm text-slate-500">Importe saldos e movimentações</p>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-xl bg-slate-50 p-4">
-            {banks.length > 0 ? (
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-slate-700">
-                    {banks.length} banco{banks.length > 1 ? 's' : ''} conectado{banks.length > 1 ? 's' : ''}
-                  </p>
-                  <p className="mt-0.5 text-sm text-slate-500">
-                    {banks.map((b) => b.institutionName).join(', ')} — sincronizados automaticamente.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-slate-700">Nenhum banco conectado</p>
-                  <p className="mt-0.5 text-sm text-slate-500">
-                    Conecte seu banco para importar saldos e movimentações automaticamente.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button onClick={() => navigate('/bancos')} className="btn-primary mt-4 w-full">
-            <Landmark className="h-4 w-4" /> {banks.length > 0 ? 'Gerenciar bancos conectados' : 'Conectar conta bancária'}
-            <ArrowRight className="h-4 w-4" />
-          </button>
-          <p className="mt-3 text-xs leading-relaxed text-slate-400">
-            A conexão é protegida e criptografada — você autoriza o acesso direto no seu banco. Sem
-            integração ativa, o modo demonstração usa dados fictícios. Você também pode adicionar contas
-            manualmente em <strong>Contas</strong> ou importar um extrato CSV em <strong>Movimentações</strong>.
-          </p>
-        </div>
-
-        {/* Compartilhamento */}
+      {/* Compartilhamento */}
         <div className="card">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
@@ -220,7 +161,6 @@ export default function Settings() {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 }

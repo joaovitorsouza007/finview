@@ -49,7 +49,7 @@ export default function Categories() {
                   )}
                 </div>
                 <p className="text-sm text-slate-500">
-                  {c._count.transactions} movimentação{c._count.transactions === 1 ? '' : 'ões'}
+                  {c._count.transactions} {c._count.transactions === 1 ? 'movimentação' : 'movimentações'}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-0.5">
